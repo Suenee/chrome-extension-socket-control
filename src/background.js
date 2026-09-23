@@ -77,7 +77,7 @@ async function ping(){
   if(!admitted) return;
   try {
     const r=await serverCall("ping",{},6000); const boxes=r?.mailboxes||{};
-    const now=Object.values(boxes).some(x=>x?.connected===true); const arrived=now&&!peerConnected; peerConnected=now;
+    const now=Object.entries(boxes).some(([name,x])=>name!==settings.socketBox && x?.connected===true); const arrived=now&&!peerConnected; peerConnected=now;
     await setState(now?"connected":"waiting",now?"Connected to SUB and peer":"Connected to SUB — waiting for SUM");
     if(arrived) publishState();
   } catch(e){ setState("error","SUB ping failed: "+e.message); }
@@ -85,7 +85,7 @@ async function ping(){
 function startPing(){ stopPing(); pingTimer=setInterval(ping,10000); }
 function stopPing(){ if(pingTimer)clearInterval(pingTimer); pingTimer=null; }
 function schedulePublish(){ clearTimeout(publishTimer); publishTimer=setTimeout(()=>publishState(),150); }
-async function publishState(){ if(!admitted||!peerConnected||ws?.readyState!==WebSocket.OPEN)return; try{ const args=await getBrowserState(); send(envelope(settings.socketBox,"event",{event:"browserStateChanged",args,expectsResponse:false})); }catch(e){log("ERROR","STATE","Publish failed",String(e));} }
+async function publishState(){ if(!admitted||ws?.readyState!==WebSocket.OPEN)return; try{ const args=await getBrowserState(); send(envelope(settings.socketBox,"event",{event:"browserStateChanged",args,expectsResponse:false})); }catch(e){log("ERROR","STATE","Publish failed",String(e));} }
 async function setState(state,detail){
   const level=state==="connected"?"green":(state==="waiting"||state==="connecting")?"yellow":(state==="disabled"||state==="not_configured")?"gray":"red";
   await chrome.storage.local.set({connectionStatus:{state,level,detail,configured:validSettings(settings),admitted,peerConnected,updatedAt:new Date().toISOString()}});
