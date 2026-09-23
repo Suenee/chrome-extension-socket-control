@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "chrome_socket_control",
   "name": "Client Socket Control",
-  "version": "0.13",
+  "version": "0.14",
   "description": "Chrome/Brave window and tab control profile for Socket Universe Module.",
   "vppVersion": 1,
   "namespace": "chrome",
@@ -57,6 +57,18 @@
     {
       "id": "tab_count",
       "name": "Browser tab count"
+    },
+    {
+      "id": "browser_state",
+      "name": "Browser state JSON"
+    },
+    {
+      "id": "windows",
+      "name": "Browser windows JSON"
+    },
+    {
+      "id": "tabs",
+      "name": "Browser tabs JSON"
     }
   ],
   "dynamicVariables": [],
@@ -96,11 +108,23 @@
         },
         "tabCount": {
           "type": "integer"
+        },
+        "browserStateJson": {
+          "type": "string"
+        },
+        "windowsJson": {
+          "type": "string"
+        },
+        "tabsJson": {
+          "type": "string"
         }
       },
       "map": {
         "windowCount": "window_count",
-        "tabCount": "tab_count"
+        "tabCount": "tab_count",
+        "browserStateJson": "browser_state",
+        "windowsJson": "windows",
+        "tabsJson": "tabs"
       }
     }
   },
