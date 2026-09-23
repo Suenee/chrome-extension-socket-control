@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$UpdaterRevision = '5'
+$UpdaterRevision = '6'
 $Branch = 'main'
 $RepoUrl = 'https://github.com/Suenee/chrome-extension-socket-control.git'
 $Phase = 'SELF-UPDATE'
@@ -174,6 +174,11 @@ try {
   Write-Log "Extension version: $($chromeManifest.version)"
   Write-Log "Repository synchronized and verified."
   Write-Log 'STATUS: SUCCESS - phase=COMPLETE' 'OK'
+  Write-Host ''
+  Write-Host '============================================================' -ForegroundColor Green
+  Write-Host '  UPGRADE SUCCESSFUL' -ForegroundColor Green
+  Write-Host ("  Chrome Extension Socket Control  v" + $chromeManifest.version) -ForegroundColor Green
+  Write-Host '============================================================' -ForegroundColor Green
   exit 0
 }
 catch {
