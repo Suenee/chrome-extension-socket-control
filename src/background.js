@@ -53,7 +53,7 @@ function disconnect(manual=true){
   if(ws) { try{ws.close(1000,"User disconnect");}catch{} } ws=null; admitted=false; peerConnected=false;
 }
 async function register(){
-  try { await serverCall("registerConnection",{hostName:navigator.userAgent},8000); admitted=true; await ping(); startPing(); }
+  try { await serverCall("registerConnection",{hostName:navigator.userAgent},8000); admitted=true; await publishState(); await ping(); startPing(); }
   catch(e){ await log("ERROR","VPP","Registration failed",String(e)); setState("error","SUB admission failed: "+e.message); try{ws?.close();}catch{} }
 }
 function serverCall(method,args={},timeout=8000){
@@ -85,7 +85,7 @@ async function ping(){
 function startPing(){ stopPing(); pingTimer=setInterval(ping,10000); }
 function stopPing(){ if(pingTimer)clearInterval(pingTimer); pingTimer=null; }
 function schedulePublish(){ clearTimeout(publishTimer); publishTimer=setTimeout(()=>publishState(),150); }
-async function publishState(){ if(!admitted||ws?.readyState!==WebSocket.OPEN)return; try{ const args=await getBrowserState(); send(envelope(settings.socketBox,"event",{event:"browserStateChanged",args,expectsResponse:false})); }catch(e){log("ERROR","STATE","Publish failed",String(e));} }
+async function publishState(){ if(!admitted||ws?.readyState!==WebSocket.OPEN)return; try{ const args=await getBrowserState(); await chrome.storage.local.set({lastBrowserState:args}); send(envelope(settings.socketBox,"event",{event:"browserStateChanged",args,expectsResponse:false})); await log("INFO","STATE","Browser state published",{windowCount:args.windowCount,tabCount:args.tabCount}); }catch(e){log("ERROR","STATE","Publish failed",String(e));} }
 async function setState(state,detail){
   const level=state==="connected"?"green":(state==="waiting"||state==="connecting")?"yellow":(state==="disabled"||state==="not_configured")?"gray":"red";
   await chrome.storage.local.set({connectionStatus:{state,level,detail,configured:validSettings(settings),admitted,peerConnected,updatedAt:new Date().toISOString()}});
@@ -93,7 +93,7 @@ async function setState(state,detail){
 }
 function fail(e){ log("ERROR","SOCKET","Connect failed",String(e)); setState("error",e.message||String(e)); if(validSettings(settings)&&settings.autoConnect) reconnectTimer=setTimeout(connect,3000); }
 async function handleUi(m){
-  if(m?.type==="getStatus") return {settings:{...settings},status:(await chrome.storage.local.get("connectionStatus")).connectionStatus||null};
+  if(m?.type==="getStatus"){ const local=await chrome.storage.local.get(["connectionStatus","lastBrowserState"]); return {settings:{...settings},status:local.connectionStatus||null,browserState:local.lastBrowserState||null}; }
   if(m?.type==="saveSettings"){
     const next={...DEFAULTS,...m.settings,configured:true};
     if(!validSettings(next)) return {ok:false,error:"Server, valid port, Socket Box and API key are required to enable the connection."};
