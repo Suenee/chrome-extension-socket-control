@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13 - 23.09.2026
+
+- Renamed the displayed application to Client Socket Control.
+- Browser state snapshots are published after SUB admission even while peer discovery diagnostics are still waiting, preventing initial window/tab counts from being suppressed.
+- Added persistent application IDs for browser windows and tabs and exposed runtime Chrome IDs only as metadata.
+- Dynamic SUM window/tab collections now use persistent IDs.
+- Tab Create can target Active window or a dynamically discovered persistent window.
+- Window/tab state is published as complete authoritative collections for Companion selectors and move actions.
+- Reset button now appears before Connect/Disconnect.
+
 ## 0.12 - 23.09.2026
 
 - Removed the explicit Save and Test connection buttons.
