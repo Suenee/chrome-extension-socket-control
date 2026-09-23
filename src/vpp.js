@@ -7,7 +7,7 @@ export async function dispatch(message) {
   const a=message.args && typeof message.args==="object" && !Array.isArray(message.args) ? message.args : {};
   const methods={
     getBrowserState:()=>browser.getBrowserState(), getTab:()=>browser.getTab(a.tabId), findTabs:()=>browser.findTabs(a.selector),
-    createTab:()=>browser.createTab(a), closeTab:()=>browser.closeTab(a), activateTab:()=>browser.activateTab(a), moveTab:()=>browser.moveTab(a),
+    createTab:()=>browser.createTab(a), closeTab:()=>browser.closeTab(a), activateTab:()=>browser.activateTab(a), focusTab:()=>browser.focusTab(a), moveTab:()=>browser.moveTab(a),
     moveTabs:()=>browser.moveTabs(a), reorderTabs:()=>browser.reorderTabs(a), createWindow:()=>browser.createWindow(a), closeWindow:()=>browser.closeWindow(a),
     focusWindow:()=>browser.focusWindow(a), moveTabsToNewWindow:()=>browser.moveTabsToNewWindow(a)
   };
