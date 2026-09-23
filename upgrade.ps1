@@ -80,7 +80,7 @@ function Fail {
 }
 
 try {
-  Write-Log "Chrome Extension Socket Control updater revision $UpdaterRevision"
+  Write-Log "Chrome Client Socket Control updater revision $UpdaterRevision"
   Write-Log "Repository source path: $RepositoryPath"
   Write-Log "Active path: $ActivePath"
   Write-Log "Target branch: $Branch"
@@ -177,7 +177,7 @@ try {
   Write-Host ''
   Write-Host '============================================================' -ForegroundColor Green
   Write-Host '  UPGRADE SUCCESSFUL' -ForegroundColor Green
-  Write-Host ("  Chrome Extension Socket Control  v" + $chromeManifest.version) -ForegroundColor Green
+  Write-Host ("  Chrome Client Socket Control  v" + $chromeManifest.version) -ForegroundColor Green
   Write-Host '============================================================' -ForegroundColor Green
   exit 0
 }
