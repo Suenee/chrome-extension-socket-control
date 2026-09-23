@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension Socket Control",
+  "name": "Chrome Client Socket Control",
   "version": "0.11",
   "description": "VPP/SUB control of Chrome and Brave windows and tabs.",
   "permissions": ["tabs", "storage"],
