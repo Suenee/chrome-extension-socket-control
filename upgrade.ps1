@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$UpdaterRevision = '7'
+$UpdaterRevision = '8'
 $Branch = 'main'
 $RepoUrl = 'https://github.com/Suenee/chrome-extension-socket-control.git'
 $Phase = 'SELF-UPDATE'
@@ -80,7 +80,7 @@ function Fail {
 }
 
 try {
-  Write-Log "Chrome Client Socket Control updater revision $UpdaterRevision"
+  Write-Log "Client Socket Control updater revision $UpdaterRevision"
   Write-Log "Repository source path: $RepositoryPath"
   Write-Log "Active path: $ActivePath"
   Write-Log "Target branch: $Branch"
@@ -163,7 +163,7 @@ try {
   }
 
   $chromeManifest = Get-Content -LiteralPath (Join-Path $RepositoryPath 'manifest.json') -Raw | ConvertFrom-Json
-  if ($chromeManifest.version -ne '0.12') {
+  if ($chromeManifest.version -ne '0.13') {
     Fail "Unexpected extension version: $($chromeManifest.version)"
   }
 
@@ -177,7 +177,7 @@ try {
   Write-Host ''
   Write-Host '============================================================' -ForegroundColor Green
   Write-Host '  UPGRADE SUCCESSFUL' -ForegroundColor Green
-  Write-Host ("  Chrome Client Socket Control  v" + $chromeManifest.version) -ForegroundColor Green
+  Write-Host ("  Client Socket Control  v" + $chromeManifest.version) -ForegroundColor Green
   Write-Host '============================================================' -ForegroundColor Green
   exit 0
 }
