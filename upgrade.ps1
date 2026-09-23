@@ -3,7 +3,7 @@ param(
   [Parameter(Mandatory=$true)][string]$ActivePath
 )
 $ErrorActionPreference = 'Stop'
-$UpdaterRevision = '1'
+$UpdaterRevision = '2'
 $Branch = 'main'
 $RepoUrl = 'https://github.com/Suenee/chrome-extension-socket-control.git'
 $Phase = 'SELF-UPDATE'
@@ -23,7 +23,7 @@ function Write-Log([string]$Message,[string]$Level='INFO') {
 }
 function Git([string[]]$ArgumentList,[switch]$AllowFailure) {
   Write-Log ('git ' + ($ArgumentList -join ' '))
-  $output = & git @ArgumentList 2>&1
+  $output = & git.exe @ArgumentList 2>&1
   $code = $LASTEXITCODE
   foreach($line in $output){ Write-Log ([string]$line) 'GIT' }
   if($code -ne 0 -and -not $AllowFailure){ throw "git failed with exit code $code" }
@@ -41,7 +41,7 @@ try {
   Write-Log "Active path: $ActivePath"
   Write-Log "Target branch: $Branch"
   Write-Log ("PowerShell: " + $PSVersionTable.PSVersion)
-  Write-Log ("Git: " + ((& git --version) -join ' '))
+  Write-Log ("Git: " + ((& git.exe --version) -join ' '))
 
   $script:Phase='REPOSITORY'
   Set-Location -LiteralPath $RepositoryPath
