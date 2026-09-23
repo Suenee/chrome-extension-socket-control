@@ -101,7 +101,6 @@ async function handleUi(m){
   }
   if(m?.type==="connect"){ if(!validSettings(settings)) return {ok:false,error:"Configuration required."}; settings.autoConnect=true; await chrome.storage.sync.set({autoConnect:true}); connect(); return {ok:true}; }
   if(m?.type==="disconnect"){ disconnect(true); if(settings.configured) await chrome.storage.sync.set({autoConnect:false}); await setState(validSettings(settings)?"disabled":"not_configured",validSettings(settings)?"Disconnected by user":"Not configured — connection is inactive"); return {ok:true}; }
-  if(m?.type==="test"){ if(!validSettings(settings)) return {ok:false,error:"Configuration required."}; if(ws?.readyState!==WebSocket.OPEN) connect(); else await ping(); return {ok:true}; }
-  if(m?.type==="clearConfiguration"){ disconnect(false); settings={...DEFAULTS,autoConnect:false,configured:false}; await chrome.storage.sync.clear(); await setState("not_configured","Not configured — connection is inactive"); return {ok:true}; }
+  if(m?.type==="resetForm") return {ok:true,defaults:{...DEFAULTS,configured:false}};
   return {ok:false};
 }
