@@ -1,58 +1,75 @@
-function windowRecord(w) {
-  return { windowId: w.id, focused: !!w.focused, state: w.state || "normal", type: w.type || "normal" };
+const STORE_KEY="persistentBrowserIds";
+let registry=null;
+
+async function loadRegistry(){
+  if(registry) return registry;
+  const r=await chrome.storage.local.get(STORE_KEY);
+  registry=r[STORE_KEY]||{nextWindow:1,nextTab:1,windows:{},tabs:{}};
+  return registry;
 }
-function tabRecord(t) {
-  return { tabId:t.id, windowId:t.windowId, index:t.index, active:!!t.active, pinned:!!t.pinned, groupId:t.groupId ?? -1, title:t.title || "", url:t.url || t.pendingUrl || "" };
-}
-export async function getBrowserState() {
-  const windows = await chrome.windows.getAll({ populate:false, windowTypes:["normal"] });
-  const tabs = await chrome.tabs.query({});
-  const ids = new Set(windows.map(w => w.id));
-  const wr = windows.map(windowRecord);
-  const tr = tabs.filter(t => ids.has(t.windowId)).map(tabRecord);
-  return { windows:wr, tabs:tr, windowCount:wr.length, tabCount:tr.length };
-}
-export async function getTab(tabId) { return tabRecord(await chrome.tabs.get(requireInt(tabId,"tabId"))); }
-export async function findTabs(selector={}) {
-  if (!selector || typeof selector !== "object" || Array.isArray(selector)) throw appError("INVALID_ARGUMENT","selector must be an object");
-  return (await chrome.tabs.query({})).map(tabRecord).filter(t => matches(t,selector));
-}
-function matches(t,s) {
-  for (const k of ["tabId","windowId","groupId"]) if (s[k] !== undefined && t[k] !== Number(s[k])) return false;
-  for (const k of ["active","pinned"]) if (s[k] !== undefined && t[k] !== !!s[k]) return false;
-  for (const k of ["url","title"]) if (s[k] !== undefined && !matchText(t[k],s[k])) return false;
-  return true;
-}
-function matchText(actual,spec) {
-  if (typeof spec === "string") return actual === spec;
-  if (!spec || typeof spec !== "object" || typeof spec.value !== "string") throw appError("INVALID_ARGUMENT","text selector must be string or {value,match}");
-  const mode=spec.match || "exact";
-  if (mode==="exact") return actual===spec.value;
-  if (mode==="contains") return actual.includes(spec.value);
-  if (mode==="wildcard") {
-    const escaped=spec.value.replace(/[.+^$()|[\]\\]/g,"\\$&").replace(/\*/g,".*").replace(/\?/g,".");
-    return new RegExp("^"+escaped+"$").test(actual);
+async function saveRegistry(){await chrome.storage.local.set({[STORE_KEY]:registry});}
+function newId(kind){const n=kind==="window"?registry.nextWindow++:registry.nextTab++;return kind+"_"+n;}
+async function reconcile(){
+  await loadRegistry();
+  const windows=await chrome.windows.getAll({populate:true,windowTypes:["normal"]});
+  const liveW=new Set(),liveT=new Set();
+  for(const w of windows){
+    const wk=String(w.id); liveW.add(wk);
+    if(!registry.windows[wk]) registry.windows[wk]={persistentId:newId("window")};
+    for(const t of (w.tabs||[])){
+      const tk=String(t.id); liveT.add(tk);
+      if(!registry.tabs[tk]) registry.tabs[tk]={persistentId:newId("tab")};
+    }
   }
-  throw appError("INVALID_ARGUMENT","unsupported match mode");
+  for(const k of Object.keys(registry.windows))if(!liveW.has(k))delete registry.windows[k];
+  for(const k of Object.keys(registry.tabs))if(!liveT.has(k))delete registry.tabs[k];
+  await saveRegistry(); return windows;
 }
-export async function createTab(a) { return tabRecord(await chrome.tabs.create(clean({url:a.url,windowId:num(a.windowId),active:a.active,index:num(a.index)}))); }
-export async function closeTab(a) { const id=requireInt(a.tabId,"tabId"); await chrome.tabs.remove(id); return { tabId:id }; }
-export async function activateTab(a) { const id=requireInt(a.tabId,"tabId"); const t=await chrome.tabs.update(id,{active:true}); await chrome.windows.update(t.windowId,{focused:true}); return tabRecord(t); }
-export async function moveTab(a) { const r=await chrome.tabs.move(requireInt(a.tabId,"tabId"),clean({windowId:num(a.windowId),index:requireInt(a.index,"index",true)})); return tabRecord(r); }
-export async function moveTabs(a) { const ids=requireIds(a.tabIds); const r=await chrome.tabs.move(ids,clean({windowId:num(a.windowId),index:requireInt(a.index,"index",true)})); return (Array.isArray(r)?r:[r]).map(tabRecord); }
-export async function reorderTabs(a) { return moveTabs({tabIds:a.tabIds,windowId:requireInt(a.windowId,"windowId"),index:requireInt(a.index,"index",true)}); }
-export async function createWindow(a) { const w=await chrome.windows.create(clean({url:a.url,focused:a.focused,state:a.state})); if (!w) throw appError("CHROME_API_ERROR","window was not created"); return windowRecord(w); }
-export async function closeWindow(a) { const id=requireInt(a.windowId,"windowId"); await chrome.windows.remove(id); return {windowId:id}; }
-export async function focusWindow(a) { return windowRecord(await chrome.windows.update(requireInt(a.windowId,"windowId"),{focused:true})); }
-export async function moveTabsToNewWindow(a) {
-  const ids=requireIds(a.tabIds); const first=await chrome.tabs.get(ids[0]);
-  const w=await chrome.windows.create({tabId:first.id,focused:a.focused !== false});
-  if (!w?.id) throw appError("CHROME_API_ERROR","window was not created");
-  if (ids.length>1) await chrome.tabs.move(ids.slice(1),{windowId:w.id,index:-1});
-  return { window:windowRecord(await chrome.windows.get(w.id)), tabs:(await chrome.tabs.query({windowId:w.id})).map(tabRecord) };
+function windowRecord(w){
+  const p=registry.windows[String(w.id)]?.persistentId||"";
+  return {persistentWindowId:p,windowId:w.id,label:(w.focused?"Active — ":"")+p+" — "+((w.tabs||[]).length)+" tabs",focused:!!w.focused,state:w.state||"normal",type:w.type||"normal"};
 }
-function clean(o){ return Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined)); }
-function num(v){ return v===undefined ? undefined : Number(v); }
-function requireInt(v,n,allowMinusOne=false){ const x=Number(v); if(!Number.isInteger(x)||(!allowMinusOne&&x<0)||(allowMinusOne&&x<-1)) throw appError("INVALID_ARGUMENT",n+" must be an integer"); return x; }
-function requireIds(v){ if(!Array.isArray(v)||!v.length) throw appError("INVALID_ARGUMENT","tabIds must be a non-empty array"); return v.map(x=>requireInt(x,"tabId")); }
-export function appError(code,message){ const e=new Error(message); e.code=code; return e; }
+function tabRecord(t){
+  const p=registry.tabs[String(t.id)]?.persistentId||"";
+  const wp=registry.windows[String(t.windowId)]?.persistentId||"";
+  return {persistentTabId:p,persistentWindowId:wp,tabId:t.id,windowId:t.windowId,index:t.index,active:!!t.active,pinned:!!t.pinned,groupId:t.groupId??-1,title:t.title||"",url:t.url||t.pendingUrl||""};
+}
+async function runtimeWindowId(v){
+  if(v===undefined||v===null||v===""||v==="active"){const w=await chrome.windows.getLastFocused({windowTypes:["normal"]});return w.id;}
+  await reconcile(); const e=Object.entries(registry.windows).find(([,x])=>x.persistentId===v); if(e)return Number(e[0]);
+  return requireInt(v,"windowId");
+}
+async function runtimeTabId(v){
+  await reconcile(); const e=Object.entries(registry.tabs).find(([,x])=>x.persistentId===v); if(e)return Number(e[0]);
+  return requireInt(v,"tabId");
+}
+export async function getBrowserState(){
+  const windows=await reconcile(); const wr=windows.map(windowRecord); const tr=windows.flatMap(w=>(w.tabs||[]).map(tabRecord));
+  return {windows:wr,tabs:tr,windowCount:wr.length,tabCount:tr.length};
+}
+export async function getTab(tabId){const id=await runtimeTabId(tabId);await reconcile();return tabRecord(await chrome.tabs.get(id));}
+export async function findTabs(selector={}){
+  if(!selector||typeof selector!=="object"||Array.isArray(selector))throw appError("INVALID_ARGUMENT","selector must be an object");
+  const s=await getBrowserState();return s.tabs.filter(t=>matches(t,selector));
+}
+function matches(t,s){
+  for(const k of ["tabId","windowId","groupId"])if(s[k]!==undefined&&t[k]!==Number(s[k]))return false;
+  for(const k of ["persistentTabId","persistentWindowId"])if(s[k]!==undefined&&t[k]!==s[k])return false;
+  for(const k of ["active","pinned"])if(s[k]!==undefined&&t[k]!==!!s[k])return false;
+  for(const k of ["url","title"])if(s[k]!==undefined&&!matchText(t[k],s[k]))return false;return true;
+}
+function matchText(actual,spec){if(typeof spec==="string")return actual===spec;if(!spec||typeof spec!=="object"||typeof spec.value!=="string")throw appError("INVALID_ARGUMENT","text selector must be string or {value,match}");const mode=spec.match||"exact";if(mode==="exact")return actual===spec.value;if(mode==="contains")return actual.includes(spec.value);if(mode==="wildcard"){const escaped=spec.value.replace(/[.+^$()|[\]\\]/g,"\\$&").replace(/\*/g,".*").replace(/\?/g,".");return new RegExp("^"+escaped+"$").test(actual);}throw appError("INVALID_ARGUMENT","unsupported match mode");}
+export async function createTab(a){const windowId=await runtimeWindowId(a.windowId);const t=await chrome.tabs.create(clean({url:a.url,windowId,active:a.active,index:num(a.index)}));await reconcile();return tabRecord(t);}
+export async function closeTab(a){const id=await runtimeTabId(a.tabId??a.persistentTabId);await chrome.tabs.remove(id);return {tabId:id};}
+export async function activateTab(a){const id=await runtimeTabId(a.tabId??a.persistentTabId);const t=await chrome.tabs.update(id,{active:true});await chrome.windows.update(t.windowId,{focused:true});await reconcile();return tabRecord(t);}
+export async function moveTab(a){const id=await runtimeTabId(a.tabId??a.persistentTabId);const windowId=await runtimeWindowId(a.windowId??a.persistentWindowId);const r=await chrome.tabs.move(id,{windowId,index:requireInt(a.index,"index",true)});await reconcile();return tabRecord(r);}
+export async function moveTabs(a){const ids=[];for(const x of (a.tabIds||[]))ids.push(await runtimeTabId(x));if(!ids.length)throw appError("INVALID_ARGUMENT","tabIds must be a non-empty array");const windowId=await runtimeWindowId(a.windowId??a.persistentWindowId);const r=await chrome.tabs.move(ids,{windowId,index:requireInt(a.index,"index",true)});await reconcile();return (Array.isArray(r)?r:[r]).map(tabRecord);}
+export async function reorderTabs(a){return moveTabs(a);}
+export async function createWindow(a){const w=await chrome.windows.create(clean({url:a.url,focused:a.focused,state:a.state}));if(!w)throw appError("CHROME_API_ERROR","window was not created");await reconcile();return windowRecord(await chrome.windows.get(w.id,{populate:true}));}
+export async function closeWindow(a){const id=await runtimeWindowId(a.windowId??a.persistentWindowId);await chrome.windows.remove(id);return {windowId:id};}
+export async function focusWindow(a){const id=await runtimeWindowId(a.windowId??a.persistentWindowId);const w=await chrome.windows.update(id,{focused:true});await reconcile();return windowRecord({...w,tabs:await chrome.tabs.query({windowId:id})});}
+export async function moveTabsToNewWindow(a){const ids=[];for(const x of (a.tabIds||[]))ids.push(await runtimeTabId(x));if(!ids.length)throw appError("INVALID_ARGUMENT","tabIds must be a non-empty array");const first=await chrome.tabs.get(ids[0]);const w=await chrome.windows.create({tabId:first.id,focused:a.focused!==false});if(!w?.id)throw appError("CHROME_API_ERROR","window was not created");if(ids.length>1)await chrome.tabs.move(ids.slice(1),{windowId:w.id,index:-1});return getBrowserState();}
+function clean(o){return Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined));}
+function num(v){return v===undefined?undefined:Number(v);}
+function requireInt(v,n,allowMinusOne=false){const x=Number(v);if(!Number.isInteger(x)||(!allowMinusOne&&x<0)||(allowMinusOne&&x<-1))throw appError("INVALID_ARGUMENT",n+" must be an integer");return x;}
+export function appError(code,message){const e=new Error(message);e.code=code;return e;}
