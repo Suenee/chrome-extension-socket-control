@@ -1,6 +1,6 @@
-# Chrome Extension Socket Control
+# Chrome Client Socket Control
 
-Chrome Extension Socket Control exposes Chrome/Brave windows and tabs through the existing VPP v1 / Socket Universe Bridge (SUB) transport so Socket Universe Module (SUM) and other VPP peers can inspect and control the browser.
+Chrome Client Socket Control exposes Chrome/Brave windows and tabs through the existing VPP v1 / Socket Universe Bridge (SUB) transport so Socket Universe Module (SUM) and other VPP peers can inspect and control the browser.
 
 Current version: **0.10**
 
