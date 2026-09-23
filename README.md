@@ -2,7 +2,7 @@
 
 Client Socket Control exposes Chrome/Brave windows and tabs through the existing VPP v1 / Socket Universe Bridge (SUB) transport so Socket Universe Module (SUM) and other VPP peers can inspect and control the browser.
 
-Current version: **0.13**
+Current version: **0.14**
 
 ## Features
 
@@ -13,7 +13,7 @@ Current version: **0.13**
 - Authoritative browser window/tab snapshots after admission, peer arrival and browser state changes.
 - VPP calls for browser state, tab search/create/close/activate/move/reorder and window create/close/focus.
 - Real tab movement via the Chromium Tabs API; tabs are not recreated from their URLs.
-- Canonical SUM application manifest in `manifest/chrome_socket_control.json`.
+- Canonical SUM application manifest in `manifest/chrome_socket_control.json`, versioned independently from the extension (currently **1.00**).
 
 ## Install / update
 
