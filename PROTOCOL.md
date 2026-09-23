@@ -1,6 +1,6 @@
 # Client Socket Control VPP contract
 
-Application version: **0.13**  
+Application version: **0.14**  
 VPP version: **1**
 
 Generic envelope, routing, admission, queue and correlation semantics are owned by the canonical VPP v1 specification in `Suenee/companion-module-voiceprompter/PROTOCOL.md`. This document defines only browser-specific application behavior.
@@ -9,7 +9,7 @@ Generic envelope, routing, admission, queue and correlation semantics are owned 
 
 The extension owns browser window/tab state. After successful SUB admission it publishes `browserStateChanged` when a permitted peer is available. It publishes again when a peer appears after being absent and after relevant browser window/tab changes. The event is change-driven, not periodic polling.
 
-`browserStateChanged.args` contains exactly `windows`, `tabs`, `windowCount`, and `tabCount`.
+`browserStateChanged.args` contains authoritative `windows`, `tabs`, `windowCount`, `tabCount`, plus JSON diagnostic projections `browserStateJson`, `windowsJson`, and `tabsJson`. The hierarchical browser-state JSON groups tabs under their owning window.
 
 Window records contain stable `persistentWindowId` plus runtime `windowId`, `label`, `focused`, `state`, and `type`. Tab records contain stable `persistentTabId` and `persistentWindowId` plus runtime `tabId`, `windowId`, `index`, `active`, `pinned`, `groupId`, `title`, `url`, and a descriptive `label`. Companion stores persistent IDs; Chromium runtime IDs are metadata only.
 
