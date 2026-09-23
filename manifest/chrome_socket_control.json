@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "chrome_socket_control",
   "name": "Chrome Socket Control",
-  "version": "0.10",
+  "version": "0.11",
   "description": "Chrome/Brave window and tab control profile for Socket Universe Module.",
   "vppVersion": 1,
   "namespace": "chrome",
