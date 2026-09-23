@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12 - 23.09.2026
+
+- Removed the explicit Save and Test connection buttons.
+- Configuration is saved automatically only when the complete form is valid; otherwise the previous valid configuration remains active.
+- Merged Connect and Disconnect into one state-aware button.
+- Replaced Clear configuration with a reset icon that restores form defaults.
+- Added a Close button to the popup.
+
 ## 0.11 - 23.09.2026
 
 - Added explicit configured / not-configured state.
