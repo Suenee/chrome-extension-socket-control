@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14 - 23.09.2026
+
+- Publish an authoritative browser-state snapshot immediately after successful SUB admission.
+- Added browser_state, windows and tabs diagnostic Companion variables as JSON strings.
+- Browser state now also contains a hierarchical window-to-tabs tree for diagnostics.
+- Store the most recently published browser snapshot in extension diagnostics.
+- Window: Create explicitly defaults Window state to Default.
+- Added state publication logging with window/tab counts.
+
 ## 0.13 - 23.09.2026
 
 - Renamed the displayed application to Client Socket Control.
