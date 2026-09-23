@@ -8,7 +8,7 @@
 - Dynamic SUM window/tab collections now use persistent IDs.
 - Tab Create can target Active window or a dynamically discovered persistent window.
 - Window/tab state is published as complete authoritative collections for Companion selectors and move actions.
-- Reset button now appears before Connect/Disconnect.
+- Reset button now appears before Connect/Disconnect.\n- Added Tab: Focus, which activates a tab and brings its containing window to the foreground.\n- Added Default / Maximized state selection to Window: Create.\n- Completed explicit dynamic selectors for tab close/activate/focus/move and window focus/close actions.\n- Tab selector labels include title, host and persistent window identity.
 
 ## 0.12 - 23.09.2026
 
