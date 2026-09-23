@@ -45,7 +45,8 @@ async function runtimeTabId(v){
 }
 export async function getBrowserState(){
   const windows=await reconcile(); const wr=windows.map(windowRecord); const tr=windows.flatMap(w=>(w.tabs||[]).map(tabRecord));
-  return {windows:wr,tabs:tr,windowCount:wr.length,tabCount:tr.length};
+  const tree=wr.map(w=>({...w,tabs:tr.filter(t=>t.persistentWindowId===w.persistentWindowId)}));
+  return {windows:wr,tabs:tr,windowCount:wr.length,tabCount:tr.length,browserState:tree,windowsJson:JSON.stringify(wr),tabsJson:JSON.stringify(tr),browserStateJson:JSON.stringify(tree)};
 }
 export async function getTab(tabId){const id=await runtimeTabId(tabId);await reconcile();return tabRecord(await chrome.tabs.get(id));}
 export async function findTabs(selector={}){
