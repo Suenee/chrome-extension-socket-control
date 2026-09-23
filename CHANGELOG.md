@@ -8,6 +8,7 @@
 - Store the most recently published browser snapshot in extension diagnostics.
 - Window: Create explicitly defaults Window state to Default.
 - Added state publication logging with window/tab counts.
+- Decoupled SUM manifest versioning from the extension; the manifest now starts its independent series at 1.00.
 
 ## 0.13 - 23.09.2026
 
