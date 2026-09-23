@@ -1,6 +1,6 @@
-# Chrome Client Socket Control VPP contract
+# Client Socket Control VPP contract
 
-Application version: **0.10**  
+Application version: **0.13**  
 VPP version: **1**
 
 Generic envelope, routing, admission, queue and correlation semantics are owned by the canonical VPP v1 specification in `Suenee/companion-module-voiceprompter/PROTOCOL.md`. This document defines only browser-specific application behavior.
@@ -11,7 +11,7 @@ The extension owns browser window/tab state. After successful SUB admission it p
 
 `browserStateChanged.args` contains exactly `windows`, `tabs`, `windowCount`, and `tabCount`.
 
-Window records contain `windowId`, `focused`, `state`, and `type`. Tab records contain `tabId`, `windowId`, `index`, `active`, `pinned`, `groupId`, `title`, and `url`.
+Window records contain stable `persistentWindowId` plus runtime `windowId`, `label`, `focused`, `state`, and `type`. Tab records contain stable `persistentTabId` and `persistentWindowId` plus runtime `tabId`, `windowId`, `index`, `active`, `pinned`, `groupId`, `title`, `url`, and a descriptive `label`. Companion stores persistent IDs; Chromium runtime IDs are metadata only.
 
 ## Calls
 
@@ -22,7 +22,7 @@ All calls use `expectsResponse: true` and normal VPP terminal response/error cor
 - `findTabs { selector }`
 - `createTab { url?, windowId?, active?, index? }`
 - `closeTab { tabId }`
-- `activateTab { tabId }`
+- `activateTab { persistentTabId }`\n- `focusTab { persistentTabId }
 - `moveTab { tabId, windowId?, index }`
 - `moveTabs { tabIds, windowId?, index }`
 - `reorderTabs { tabIds, windowId, index }`
