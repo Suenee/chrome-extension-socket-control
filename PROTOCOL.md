@@ -1,4 +1,4 @@
-# Chrome Extension Socket Control VPP contract
+# Chrome Client Socket Control VPP contract
 
 Application version: **0.10**  
 VPP version: **1**
