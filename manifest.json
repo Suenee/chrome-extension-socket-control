@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Extension Socket Control",
+  "version": "0.10",
+  "description": "VPP/SUB control of Chrome and Brave windows and tabs.",
+  "permissions": ["tabs", "storage"],
+  "host_permissions": ["ws://*/*", "wss://*/*"],
+  "background": {"service_worker": "src/background.js", "type": "module"},
+  "action": {"default_title": "Socket Control", "default_popup": "popup/popup.html"}
+}
