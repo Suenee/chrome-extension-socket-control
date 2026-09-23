@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$UpdaterRevision = '3'
+$UpdaterRevision = '4'
 $Branch = 'main'
 $RepoUrl = 'https://github.com/Suenee/chrome-extension-socket-control.git'
 $Phase = 'SELF-UPDATE'
@@ -110,6 +110,17 @@ try {
     Write-Log 'Tracked local changes detected:' 'ERROR'
     foreach ($d in $dirty) { Write-Log $d 'ERROR' }
     Fail 'Commit or revert tracked local changes before upgrade.'
+  }
+
+  # Fresh bootstrap may contain the downloaded upgrade.cmd as an untracked file.
+  # It is authoritative bootstrap state, not user data, and would otherwise block checkout.
+  foreach ($bootstrapFile in @('upgrade.cmd','upgrade.ps1')) {
+    $bootstrapPath = Join-Path $RepositoryPath $bootstrapFile
+    $trackedCheck = Invoke-Git -ArgumentList @('ls-files','--error-unmatch','--',$bootstrapFile) -AllowFailure
+    if ($trackedCheck.ExitCode -ne 0 -and (Test-Path -LiteralPath $bootstrapPath)) {
+      Write-Log "Removing untracked authoritative bootstrap file before checkout: $bootstrapFile"
+      Remove-Item -LiteralPath $bootstrapPath -Force
+    }
   }
 
   Invoke-Git -ArgumentList @('checkout','-B',$Branch,("origin/"+$Branch)) | Out-Null
