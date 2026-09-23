@@ -1,7 +1,8 @@
 # Client Socket Control VPP contract
 
 Application version: **0.14**  
-VPP version: **1**
+VPP version: **1**  
+SUM manifest version: **1.00**
 
 Generic envelope, routing, admission, queue and correlation semantics are owned by the canonical VPP v1 specification in `Suenee/companion-module-voiceprompter/PROTOCOL.md`. This document defines only browser-specific application behavior.
 
