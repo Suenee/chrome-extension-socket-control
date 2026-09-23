@@ -32,7 +32,7 @@ function windowRecord(w){
 function tabRecord(t){
   const p=registry.tabs[String(t.id)]?.persistentId||"";
   const wp=registry.windows[String(t.windowId)]?.persistentId||"";
-  return {persistentTabId:p,persistentWindowId:wp,tabId:t.id,windowId:t.windowId,index:t.index,active:!!t.active,pinned:!!t.pinned,groupId:t.groupId??-1,title:t.title||"",url:t.url||t.pendingUrl||""};
+  const title=t.title||"(untitled)";const host=(()=>{try{return new URL(t.url||t.pendingUrl||"").hostname;}catch{return "";}})();return {persistentTabId:p,persistentWindowId:wp,tabId:t.id,windowId:t.windowId,index:t.index,active:!!t.active,pinned:!!t.pinned,groupId:t.groupId??-1,title,url:t.url||t.pendingUrl||"",label:title+(host?" — "+host:"")+" ["+wp+"]"};
 }
 async function runtimeWindowId(v){
   if(v===undefined||v===null||v===""||v==="active"){const w=await chrome.windows.getLastFocused({windowTypes:["normal"]});return w.id;}
