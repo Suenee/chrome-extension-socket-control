@@ -76,7 +76,7 @@
       "path": "tabs",
       "item": {
         "value": "persistentTabId",
-        "label": "title"
+        "label": "label"
       }
     }
   },
@@ -162,7 +162,7 @@
           "parse": "string",
           "choicesFrom": "tabs",
           "value": "persistentTabId",
-          "labelFrom": "title"
+          "labelFrom": "label"
         }
       ]
     },
@@ -185,7 +185,7 @@
           "parse": "string",
           "choicesFrom": "tabs",
           "value": "persistentTabId",
-          "labelFrom": "title"
+          "labelFrom": "label"
         }
       ]
     },
@@ -207,7 +207,7 @@
           "parse": "string",
           "choicesFrom": "tabs",
           "value": "persistentTabId",
-          "labelFrom": "title"
+          "labelFrom": "label"
         },
         {
           "type": "dropdown",
@@ -223,7 +223,7 @@
         {
           "type": "number",
           "id": "index",
-          "label": "Index (-1 = end)",
+          "label": "Position (-1 = end)",
           "default": -1,
           "arg": "index",
           "parse": "integer"
@@ -238,7 +238,26 @@
       "queue": {
         "policy": "fifo"
       },
-      "options": []
+      "options": [
+        {
+          "type": "dropdown",
+          "id": "state",
+          "label": "Window state",
+          "default": "default",
+          "arg": "state",
+          "parse": "string",
+          "choices": [
+            {
+              "id": "default",
+              "label": "Default"
+            },
+            {
+              "id": "maximized",
+              "label": "Maximized"
+            }
+          ]
+        }
+      ]
     },
     "window_focus": {
       "name": "Window: Focus",
@@ -281,6 +300,29 @@
           "parse": "string",
           "choicesFrom": "windows",
           "value": "persistentWindowId",
+          "labelFrom": "label"
+        }
+      ]
+    },
+    "tab_focus": {
+      "name": "Tab: Focus",
+      "operation": "call",
+      "method": "focusTab",
+      "expectsResponse": true,
+      "queue": {
+        "policy": "replace",
+        "key": "tab.focus"
+      },
+      "options": [
+        {
+          "type": "dropdown",
+          "id": "tabId",
+          "label": "Tab",
+          "default": "",
+          "arg": "persistentTabId",
+          "parse": "string",
+          "choicesFrom": "tabs",
+          "value": "persistentTabId",
           "labelFrom": "label"
         }
       ]
