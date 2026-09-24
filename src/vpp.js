@@ -1,5 +1,5 @@
 import * as browser from "./browser.js";
-export const APP="ChromeSocketControl", VERSION="0.16", VPP=1;
+export const APP="ChromeSocketControl", VERSION="0.17", VPP=1;
 export function id(){ return crypto.randomUUID(); }
 export function envelope(from,type,extra={}) { return {protocolVersion:VPP,id:id(),type,from,source:{app:APP,version:VERSION},timestamp:new Date().toISOString(),...extra}; }
 export async function dispatch(message) {
