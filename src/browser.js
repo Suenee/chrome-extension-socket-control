@@ -1,4 +1,5 @@
-const STORE_KEY="persistentBrowserIds";\nconst WINDOW_CONFIG_KEY="windowIdentityConfig";
+const STORE_KEY="persistentBrowserIds";
+const WINDOW_CONFIG_KEY="windowIdentityConfig";
 let registry=null;
 
 async function loadRegistry(){
