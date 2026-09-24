@@ -109,6 +109,9 @@
         "tabCount": {
           "type": "integer"
         },
+        "browserState": {
+          "type": "array"
+        },
         "browserStateJson": {
           "type": "string"
         },
