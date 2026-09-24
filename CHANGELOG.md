@@ -1,5 +1,10 @@
 # Changelog
 
+## Manifest 1.01 - 24.09.2026
+
+- Added the native `browserState` array to the `browserStateChanged` event contract so strict SUM event validation matches the payload emitted by Client Socket Control.
+- No extension runtime or VPP payload changes.
+
 ## 0.14 - 23.09.2026
 
 - Publish an authoritative browser-state snapshot immediately after successful SUB admission.
