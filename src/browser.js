@@ -13,6 +13,14 @@ async function loadWindowConfig(){const r=await chrome.storage.local.get(WINDOW_
 function titleCandidate(w){const tabs=w.tabs||[];const active=tabs.find(t=>t.active)||tabs[0];if(!active)return "";let s=(active.title||"").trim();if(!s){try{s=new URL(active.url||"").hostname.replace(/^www\./,"");}catch{}}return s.replace(/\s+[-–—|]\s+(Google Chrome|Brave)$/i,"").trim().slice(0,60);}
 function snakeName(s){return String(s||"").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"window";}
 function unique(base,used){let v=base||"window",n=2;while(used.has(v))v=base+"_"+n++;used.add(v);return v;}
+function windowSuggestions(w){
+  const names=[],seen=new Set();
+  for(const t of (w.tabs||[])){let s=(t.title||"").trim();if(!s){try{s=new URL(t.url||"").hostname.replace(/^www\./,"");}catch{}}
+    s=s.replace(/\s+[-–—|]\s+(Google Chrome|Brave)$/i,"").trim().slice(0,60);if(s&&!seen.has(s)){seen.add(s);names.push(s);}
+    try{const h=new URL(t.url||"").hostname.replace(/^www\./,"");if(h&&!seen.has(h)){seen.add(h);names.push(h);}}catch{}
+  }
+  return {nameSuggestions:names,cNameSuggestions:[...new Set(names.map(snakeName).filter(Boolean))]};
+}
 async function ensureWindowIdentities(windows){
   const cfg=await loadWindowConfig(), usedC=new Set(),usedN=new Set();
   for(const x of Object.values(cfg)){if(x?.cName)usedC.add(x.cName);if(x?.name)usedN.add(x.name);}
@@ -23,9 +31,9 @@ async function ensureWindowIdentities(windows){
   }
   if(changed)await chrome.storage.local.set({[WINDOW_CONFIG_KEY]:cfg});return cfg;
 }
-export async function getWindowConfiguration(){const windows=await reconcile();const cfg=await ensureWindowIdentities(windows);return windows.map(w=>({...windowRecord(w),cName:cfg[registry.windows[String(w.id)]?.persistentId]?.cName||"",name:cfg[registry.windows[String(w.id)]?.persistentId]?.name||""}));}
+export async function getWindowConfiguration(){const windows=await reconcile();const cfg=await ensureWindowIdentities(windows);return windows.map(w=>({...windowRecord(w),...windowSuggestions(w),cName:cfg[registry.windows[String(w.id)]?.persistentId]?.cName||"",name:cfg[registry.windows[String(w.id)]?.persistentId]?.name||""}));}
 export async function saveWindowConfiguration(items){if(!Array.isArray(items))throw appError("INVALID_ARGUMENT","windows must be an array");const windows=await reconcile();const live=new Set(windows.map(w=>registry.windows[String(w.id)]?.persistentId));const cfg=await loadWindowConfig(),cs=new Set(),ns=new Set();
-  for(const x of items){if(!live.has(x.persistentWindowId))continue;const c=String(x.cName||"").trim(),n=String(x.name||"").trim();if(!/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(c))throw appError("INVALID_ARGUMENT","CName must use lowercase_snake_case.");if(!n)throw appError("INVALID_ARGUMENT","Name is required.");if(cs.has(c))throw appError("INVALID_ARGUMENT","CName must be unique.");if(ns.has(n))throw appError("INVALID_ARGUMENT","Name must be unique.");cs.add(c);ns.add(n);cfg[x.persistentWindowId]={cName:c,name:n};}
+  for(const x of items){if(!live.has(x.persistentWindowId))continue;const c=String(x.cName||"").trim(),n=String(x.name||"").trim();if(!/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(c))throw appError("INVALID_ARGUMENT","CName must use lowercase_snake_case.");if(!n)throw appError("INVALID_ARGUMENT","Name is required.");if(cs.has(c))throw appError("INVALID_ARGUMENT","CName must be unique.");if(ns.has(n))throw appError("INVALID_ARGUMENT","Name must be unique.");cs.add(c);ns.add(n);cfg[x.persistentWindowId]={cName:c,name:n};}
   await chrome.storage.local.set({[WINDOW_CONFIG_KEY]:cfg});return getWindowConfiguration();
 }
 function newId(kind){const n=kind==="window"?registry.nextWindow++:registry.nextTab++;return kind+"_"+n;}
@@ -49,10 +57,10 @@ function windowRecord(w){
   const p=registry.windows[String(w.id)]?.persistentId||"";
   return {persistentWindowId:p,windowId:w.id,label:(w.focused?"Active — ":"")+p+" — "+((w.tabs||[]).length)+" tabs",focused:!!w.focused,state:w.state||"normal",type:w.type||"normal",bounds:{left:Number.isFinite(w.left)?w.left:null,top:Number.isFinite(w.top)?w.top:null,width:Number.isFinite(w.width)?w.width:null,height:Number.isFinite(w.height)?w.height:null}};
 }
-function tabRecord(t){
+function tabRecord(t,windowFocused=false){
   const p=registry.tabs[String(t.id)]?.persistentId||"";
   const wp=registry.windows[String(t.windowId)]?.persistentId||"";
-  const title=t.title||"(untitled)";const host=(()=>{try{return new URL(t.url||t.pendingUrl||"").hostname;}catch{return "";}})();return {persistentTabId:p,persistentWindowId:wp,tabId:t.id,windowId:t.windowId,index:t.index,active:!!t.active,pinned:!!t.pinned,groupId:t.groupId??-1,title,url:t.url||t.pendingUrl||"",label:title+(host?" — "+host:"")+" ["+wp+"]"};
+  const title=t.title||"(untitled)";const host=(()=>{try{return new URL(t.url||t.pendingUrl||"").hostname;}catch{return "";}})();const focused=!!t.active&&!!windowFocused;return {persistentTabId:p,persistentWindowId:wp,tabId:t.id,windowId:t.windowId,index:t.index,active:!!t.active,focused,pinned:!!t.pinned,groupId:t.groupId??-1,title,url:t.url||t.pendingUrl||"",label:title+(host?" — "+host:"")+" ["+wp+"]"};
 }
 async function runtimeWindowId(v){
   if(v===undefined||v===null||v===""||v==="active"){const w=await chrome.windows.getLastFocused({windowTypes:["normal"]});return w.id;}
@@ -64,7 +72,7 @@ async function runtimeTabId(v){
   return requireInt(v,"tabId");
 }
 export async function getBrowserState(){
-  const windows=await reconcile(); const cfg=await ensureWindowIdentities(windows); const wr=windows.map(w=>{const r=windowRecord(w),x=cfg[r.persistentWindowId]||{};return {...r,cName:x.cName||"",name:x.name||"",label:(w.focused?"Active — ":"")+(x.name||r.persistentWindowId)+" — "+((w.tabs||[]).length)+" tabs"};}); const tr=windows.flatMap(w=>(w.tabs||[]).map(tabRecord));
+  const windows=await reconcile(); const cfg=await ensureWindowIdentities(windows); const wr=windows.map(w=>{const r=windowRecord(w),x=cfg[r.persistentWindowId]||{};return {...r,cName:x.cName||"",name:x.name||"",label:(w.focused?"Active — ":"")+(x.name||r.persistentWindowId)+" — "+((w.tabs||[]).length)+" tabs"};}); const tr=windows.flatMap(w=>(w.tabs||[]).map(t=>tabRecord(t,w.focused)));
   const tree=wr.map(w=>({...w,tabs:tr.filter(t=>t.persistentWindowId===w.persistentWindowId)}));
   return {windows:wr,tabs:tr,windowCount:wr.length,tabCount:tr.length,browserState:tree,windowsJson:JSON.stringify(wr),tabsJson:JSON.stringify(tr),browserStateJson:JSON.stringify(tree)};
 }
