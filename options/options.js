@@ -19,7 +19,7 @@ function validate(){
     const c=row.querySelector(".cname"), n=row.querySelector(".wname");
     c.classList.remove("invalid");n.classList.remove("invalid");
     const cv=c.value.trim(), nv=n.value.trim();
-    if(!/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(cv)){c.classList.add("invalid");ok=false;msg||="CName must use lowercase_snake_case.";}
+    if(!/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(cv)){c.classList.add("invalid");ok=false;msg||="CName must use lowercase_snake_case.";}
     if(!nv){n.classList.add("invalid");ok=false;msg||="Name is required.";}
     cnames.set(cv,(cnames.get(cv)||[]).concat(c)); names.set(nv,(names.get(nv)||[]).concat(n));
   }
@@ -38,12 +38,17 @@ function renderWindows(items){
   for(const w of items){
     const tr=document.createElement("tr");
     const b=w.bounds||{};
-    tr.innerHTML='<td></td><td><input class="cname"></td><td><input class="wname"></td><td class="bounds"></td>';
+    const key=w.persistentWindowId.replace(/[^a-zA-Z0-9_-]/g,"_");
+    tr.innerHTML='<td></td><td><input class="cname" list="cname_'+key+'"><datalist id="cname_'+key+'"></datalist></td><td><input class="wname" list="name_'+key+'"><datalist id="name_'+key+'"></datalist></td><td class="coord x1"></td><td class="coord y1"></td><td class="coord x2"></td><td class="coord y2"></td>';
     tr.dataset.id=w.persistentWindowId;
     tr.children[0].textContent=w.persistentWindowId;
     tr.querySelector(".cname").value=w.cName||"";
     tr.querySelector(".wname").value=w.name||"";
-    tr.querySelector(".bounds").textContent=[b.left,b.top,b.width,b.height].map(x=>x??"?").join(" / ");
+    const cList=tr.querySelector("#cname_"+key), nList=tr.querySelector("#name_"+key);
+    for(const v of (w.cNameSuggestions||[])){const o=document.createElement("option");o.value=v;cList.appendChild(o);}
+    for(const v of (w.nameSuggestions||[])){const o=document.createElement("option");o.value=v;nList.appendChild(o);}
+    const x1=b.left??null,y1=b.top??null,x2=(b.left!=null&&b.width!=null)?b.left+b.width:null,y2=(b.top!=null&&b.height!=null)?b.top+b.height:null;
+    for(const [cls,v] of [["x1",x1],["y1",y1],["x2",x2],["y2",y2]])tr.querySelector("."+cls).textContent=v??"?";
     for(const input of tr.querySelectorAll("input")) input.addEventListener("input",validate);
     body.appendChild(tr);
   }
