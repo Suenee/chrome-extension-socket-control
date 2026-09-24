@@ -1,4 +1,4 @@
-const STORE_KEY="persistentBrowserIds";
+const STORE_KEY="persistentBrowserIds";\nconst WINDOW_CONFIG_KEY="windowIdentityConfig";
 let registry=null;
 
 async function loadRegistry(){
@@ -8,6 +8,25 @@ async function loadRegistry(){
   return registry;
 }
 async function saveRegistry(){await chrome.storage.local.set({[STORE_KEY]:registry});}
+async function loadWindowConfig(){const r=await chrome.storage.local.get(WINDOW_CONFIG_KEY);return r[WINDOW_CONFIG_KEY]||{};}
+function titleCandidate(w){const tabs=w.tabs||[];const active=tabs.find(t=>t.active)||tabs[0];if(!active)return "";let s=(active.title||"").trim();if(!s){try{s=new URL(active.url||"").hostname.replace(/^www\./,"");}catch{}}return s.replace(/\s+[-–—|]\s+(Google Chrome|Brave)$/i,"").trim().slice(0,60);}
+function snakeName(s){return String(s||"").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"window";}
+function unique(base,used){let v=base||"window",n=2;while(used.has(v))v=base+"_"+n++;used.add(v);return v;}
+async function ensureWindowIdentities(windows){
+  const cfg=await loadWindowConfig(), usedC=new Set(),usedN=new Set();
+  for(const x of Object.values(cfg)){if(x?.cName)usedC.add(x.cName);if(x?.name)usedN.add(x.name);}
+  let changed=false;
+  for(const w of windows){const pid=registry.windows[String(w.id)]?.persistentId;if(!pid||cfg[pid])continue;
+    let name=titleCandidate(w)||("Window "+pid.replace(/^window_/,""));const root=name;let n=2;while(usedN.has(name))name=root+" "+n++;usedN.add(name);
+    const cName=unique(snakeName(name),usedC);cfg[pid]={cName,name};changed=true;
+  }
+  if(changed)await chrome.storage.local.set({[WINDOW_CONFIG_KEY]:cfg});return cfg;
+}
+export async function getWindowConfiguration(){const windows=await reconcile();const cfg=await ensureWindowIdentities(windows);return windows.map(w=>({...windowRecord(w),cName:cfg[registry.windows[String(w.id)]?.persistentId]?.cName||"",name:cfg[registry.windows[String(w.id)]?.persistentId]?.name||""}));}
+export async function saveWindowConfiguration(items){if(!Array.isArray(items))throw appError("INVALID_ARGUMENT","windows must be an array");const windows=await reconcile();const live=new Set(windows.map(w=>registry.windows[String(w.id)]?.persistentId));const cfg=await loadWindowConfig(),cs=new Set(),ns=new Set();
+  for(const x of items){if(!live.has(x.persistentWindowId))continue;const c=String(x.cName||"").trim(),n=String(x.name||"").trim();if(!/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(c))throw appError("INVALID_ARGUMENT","CName must use lowercase_snake_case.");if(!n)throw appError("INVALID_ARGUMENT","Name is required.");if(cs.has(c))throw appError("INVALID_ARGUMENT","CName must be unique.");if(ns.has(n))throw appError("INVALID_ARGUMENT","Name must be unique.");cs.add(c);ns.add(n);cfg[x.persistentWindowId]={cName:c,name:n};}
+  await chrome.storage.local.set({[WINDOW_CONFIG_KEY]:cfg});return getWindowConfiguration();
+}
 function newId(kind){const n=kind==="window"?registry.nextWindow++:registry.nextTab++;return kind+"_"+n;}
 async function reconcile(){
   await loadRegistry();
@@ -44,7 +63,7 @@ async function runtimeTabId(v){
   return requireInt(v,"tabId");
 }
 export async function getBrowserState(){
-  const windows=await reconcile(); const wr=windows.map(windowRecord); const tr=windows.flatMap(w=>(w.tabs||[]).map(tabRecord));
+  const windows=await reconcile(); const cfg=await ensureWindowIdentities(windows); const wr=windows.map(w=>{const r=windowRecord(w),x=cfg[r.persistentWindowId]||{};return {...r,cName:x.cName||"",name:x.name||"",label:(w.focused?"Active — ":"")+(x.name||r.persistentWindowId)+" — "+((w.tabs||[]).length)+" tabs"};}); const tr=windows.flatMap(w=>(w.tabs||[]).map(tabRecord));
   const tree=wr.map(w=>({...w,tabs:tr.filter(t=>t.persistentWindowId===w.persistentWindowId)}));
   return {windows:wr,tabs:tr,windowCount:wr.length,tabCount:tr.length,browserState:tree,windowsJson:JSON.stringify(wr),tabsJson:JSON.stringify(tr),browserStateJson:JSON.stringify(tree)};
 }
