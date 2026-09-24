@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener(details=>initialize({openSetup:details.re
 chrome.runtime.onStartup.addListener(()=>initialize());
 chrome.storage.onChanged.addListener((changes,area)=>{ if(area==="sync" && Object.keys(changes).some(k=>k in DEFAULTS)) restartFromSettings(); });
 chrome.runtime.onMessage.addListener((m,_s,send)=>{ handleUi(m).then(send); return true; });
-for (const ev of [chrome.tabs.onCreated,chrome.tabs.onRemoved,chrome.tabs.onUpdated,chrome.tabs.onMoved,chrome.tabs.onActivated,chrome.tabs.onAttached,chrome.tabs.onDetached,chrome.windows.onCreated,chrome.windows.onRemoved,chrome.windows.onFocusChanged]) ev.addListener(()=>schedulePublish());
+for (const ev of [chrome.tabs.onCreated,chrome.tabs.onRemoved,chrome.tabs.onUpdated,chrome.tabs.onMoved,chrome.tabs.onActivated,chrome.tabs.onAttached,chrome.tabs.onDetached,chrome.windows.onCreated,chrome.windows.onRemoved,chrome.windows.onFocusChanged,chrome.windows.onBoundsChanged]) ev.addListener(()=>schedulePublish());
 
 initialize();
 
@@ -53,7 +53,7 @@ function disconnect(manual=true){
   if(ws) { try{ws.close(1000,"User disconnect");}catch{} } ws=null; admitted=false; peerConnected=false;
 }
 async function register(){
-  try { await serverCall("registerConnection",{hostName:navigator.userAgent},8000); admitted=true; await publishState(); await ping(); startPing(); }
+  try { await serverCall("registerConnection",{hostName:navigator.userAgent},8000); admitted=true; await publishState(true); await ping(); startPing(); }
   catch(e){ await log("ERROR","VPP","Registration failed",String(e)); setState("error","SUB admission failed: "+e.message); try{ws?.close();}catch{} }
 }
 function serverCall(method,args={},timeout=8000){
@@ -79,13 +79,13 @@ async function ping(){
     const r=await serverCall("ping",{},6000); const boxes=r?.mailboxes||{};
     const now=Object.entries(boxes).some(([name,x])=>name!==settings.socketBox && x?.connected===true); const arrived=now&&!peerConnected; peerConnected=now;
     await setState(now?"connected":"waiting",now?"Connected to SUB and peer":"Connected to SUB — waiting for SUM");
-    if(arrived) publishState();
+    if(arrived) publishState(true);
   } catch(e){ setState("error","SUB ping failed: "+e.message); }
 }
 function startPing(){ stopPing(); pingTimer=setInterval(ping,10000); }
 function stopPing(){ if(pingTimer)clearInterval(pingTimer); pingTimer=null; }
 function schedulePublish(){ clearTimeout(publishTimer); publishTimer=setTimeout(()=>publishState(),150); }
-async function publishState(){ if(!admitted||ws?.readyState!==WebSocket.OPEN)return; try{ const args=await getBrowserState(); await chrome.storage.local.set({lastBrowserState:args}); send(envelope(settings.socketBox,"event",{event:"browserStateChanged",args,expectsResponse:false})); await log("INFO","STATE","Browser state published",{windowCount:args.windowCount,tabCount:args.tabCount}); }catch(e){log("ERROR","STATE","Publish failed",String(e));} }
+async function publishState(force=false){ if(!admitted||ws?.readyState!==WebSocket.OPEN)return; try{ const args=await getBrowserState(); const local=await chrome.storage.local.get("lastBrowserState"); const previous=local.lastBrowserState; if(!force && previous && JSON.stringify(previous)===JSON.stringify(args)) return; await chrome.storage.local.set({lastBrowserState:args}); send(envelope(settings.socketBox,"event",{event:"browserStateChanged",args,expectsResponse:false})); await log("INFO","STATE","Browser state published",{windowCount:args.windowCount,tabCount:args.tabCount,forced:!!force}); }catch(e){log("ERROR","STATE","Publish failed",String(e));} }
 async function setState(state,detail){
   const level=state==="connected"?"green":(state==="waiting"||state==="connecting")?"yellow":(state==="disabled"||state==="not_configured")?"gray":"red";
   await chrome.storage.local.set({connectionStatus:{state,level,detail,configured:validSettings(settings),admitted,peerConnected,updatedAt:new Date().toISOString()}});
