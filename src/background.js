@@ -1,12 +1,12 @@
 import { log } from "./logger.js";
-import { getBrowserState } from "./browser.js";
+import { getBrowserState, getWindowConfiguration, saveWindowConfiguration } from "./browser.js";
 import { envelope, dispatch } from "./vpp.js";
 
 const DEFAULTS={host:"127.0.0.1",port:8170,socketBox:"chrome",apiKey:"",autoConnect:true,configured:false};
 let ws=null, settings={...DEFAULTS}, admitted=false, peerConnected=false, reconnectTimer=null, pingTimer=null, publishTimer=null;
 const pending=new Map();
 
-chrome.runtime.onInstalled.addListener(details=>initialize({openSetup:details.reason==="install"}));
+chrome.runtime.onInstalled.addListener(details=>initialize({openSetup:details.reason==="install"}));\nchrome.action.onClicked.addListener(()=>chrome.runtime.openOptionsPage());
 chrome.runtime.onStartup.addListener(()=>initialize());
 chrome.storage.onChanged.addListener((changes,area)=>{ if(area==="sync" && Object.keys(changes).some(k=>k in DEFAULTS)) restartFromSettings(); });
 chrome.runtime.onMessage.addListener((m,_s,send)=>{ handleUi(m).then(send); return true; });
@@ -21,7 +21,7 @@ async function initialize({openSetup=false}={}){
   if(!validSettings(settings)){
     disconnect(false);
     await setState("not_configured","Not configured — connection is inactive");
-    if(openSetup) await chrome.action.openPopup().catch(()=>{});
+    if(openSetup) await chrome.runtime.openOptionsPage().catch(()=>{});
     return;
   }
   await setState(settings.autoConnect?"connecting":"disabled",settings.autoConnect?"Starting":"Auto-connect disabled");
@@ -92,7 +92,7 @@ async function setState(state,detail){
   try{await chrome.action.setBadgeText({text:level==="green"?"OK":level==="yellow"?"…":level==="red"?"!":""});}catch{}
 }
 function fail(e){ log("ERROR","SOCKET","Connect failed",String(e)); setState("error",e.message||String(e)); if(validSettings(settings)&&settings.autoConnect) reconnectTimer=setTimeout(connect,3000); }
-async function handleUi(m){
+async function handleUi(m){\n  if(m?.type==="getOptionsData"){ const local=await chrome.storage.local.get("connectionStatus"); return {settings:{...settings},status:local.connectionStatus||null,windows:await getWindowConfiguration()}; }\n  if(m?.type==="saveOptions"){ const next={...DEFAULTS,...m.settings,configured:true}; if(!validSettings(next)) return {ok:false,error:"Server, valid port, Socket Box and API key are required."}; try{await saveWindowConfiguration(m.windows||[]);}catch(e){return {ok:false,error:e.message||String(e)};} settings=next;await chrome.storage.sync.set(settings);schedulePublish();return {ok:true}; }
   if(m?.type==="getStatus"){ const local=await chrome.storage.local.get(["connectionStatus","lastBrowserState"]); return {settings:{...settings},status:local.connectionStatus||null,browserState:local.lastBrowserState||null}; }
   if(m?.type==="saveSettings"){
     const next={...DEFAULTS,...m.settings,configured:true};
