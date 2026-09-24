@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$UpdaterRevision = '12'
+$UpdaterRevision = '13'
 $Branch = 'main'
 $RepoUrl = 'https://github.com/Suenee/chrome-extension-socket-control.git'
 $Phase = 'SELF-UPDATE'
@@ -154,6 +154,8 @@ try {
     'options\options.html',
     'options\options.css',
     'options\options.js',
+    'icons\icon16.png',
+    'icons\icon32.png',
     'manifest\chrome_socket_control.json',
     'protocol.md',
     'CHANGELOG.md',
