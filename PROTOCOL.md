@@ -1,8 +1,8 @@
 # Client Socket Control VPP contract
 
-Application version: **0.14**  
+Application version: **0.15**  
 VPP version: **1**  
-SUM manifest version: **1.00**
+SUM manifest version: **1.01**
 
 Generic envelope, routing, admission, queue and correlation semantics are owned by the canonical VPP v1 specification in `Suenee/companion-module-voiceprompter/PROTOCOL.md`. This document defines only browser-specific application behavior.
 
@@ -12,7 +12,7 @@ The extension owns browser window/tab state. After successful SUB admission it p
 
 `browserStateChanged.args` contains authoritative `windows`, `tabs`, `windowCount`, `tabCount`, plus JSON diagnostic projections `browserStateJson`, `windowsJson`, and `tabsJson`. The hierarchical browser-state JSON groups tabs under their owning window.
 
-Window records contain stable `persistentWindowId` plus runtime `windowId`, `label`, `focused`, `state`, and `type`. Tab records contain stable `persistentTabId` and `persistentWindowId` plus runtime `tabId`, `windowId`, `index`, `active`, `pinned`, `groupId`, `title`, `url`, and a descriptive `label`. Companion stores persistent IDs; Chromium runtime IDs are metadata only.
+Window records contain stable `persistentWindowId` plus runtime `windowId`, `label`, `focused`, `state`, `type`, and `bounds`. `bounds` contains the Chromium-reported `left`, `top`, `width`, and `height` desktop coordinates. CSC does not infer a physical monitor number or Windows virtual desktop from these coordinates. Tab records contain stable `persistentTabId` and `persistentWindowId` plus runtime `tabId`, `windowId`, `index`, `active`, `pinned`, `groupId`, `title`, `url`, and a descriptive `label`. Companion stores persistent IDs; Chromium runtime IDs are metadata only.
 
 ## Calls
 
