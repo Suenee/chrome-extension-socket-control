@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$UpdaterRevision = '14'
+$UpdaterRevision = '15'
 $Branch = 'main'
 $RepoUrl = 'https://github.com/Suenee/chrome-extension-socket-control.git'
 $Phase = 'SELF-UPDATE'
@@ -156,6 +156,8 @@ try {
     'options\options.js',
     'icons\icon16.png',
     'icons\icon32.png',
+    'icons\icon48.png',
+    'icons\icon128.png',
     'manifest\chrome_socket_control.json',
     'protocol.md',
     'CHANGELOG.md',
@@ -168,7 +170,7 @@ try {
   }
 
   $chromeManifest = Get-Content -LiteralPath (Join-Path $RepositoryPath 'manifest.json') -Raw | ConvertFrom-Json
-  if ($chromeManifest.version -ne '0.16') {
+  if ($chromeManifest.version -ne '0.17') {
     Fail "Unexpected extension version: $($chromeManifest.version)"
   }
 
