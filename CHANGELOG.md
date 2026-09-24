@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16 - 24.09.2026
+
+- Replaced the toolbar popup workflow with a full Client Socket Control options page.
+- Added Windows and Configuration tabs.
+- Added live browser-window table with persistent ID, editable unique CName, editable unique Name, and Chromium window bounds.
+- New windows receive an initial human-readable Name inferred from their current tab and a unique lowercase_snake_case CName; saved names are not automatically overwritten.
+- Added Reset, Save, Close, live validation, and connection-status display.
+- Clicking the extension toolbar icon now opens the options page.
+- Prepared the extension manifest for dedicated CSC icon assets.
+
+
 ## 0.15 - 24.09.2026
 
 - Added Chromium-reported window bounds (`left`, `top`, `width`, `height`) to every browser window state record.
