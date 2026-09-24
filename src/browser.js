@@ -27,7 +27,7 @@ async function reconcile(){
 }
 function windowRecord(w){
   const p=registry.windows[String(w.id)]?.persistentId||"";
-  return {persistentWindowId:p,windowId:w.id,label:(w.focused?"Active — ":"")+p+" — "+((w.tabs||[]).length)+" tabs",focused:!!w.focused,state:w.state||"normal",type:w.type||"normal"};
+  return {persistentWindowId:p,windowId:w.id,label:(w.focused?"Active — ":"")+p+" — "+((w.tabs||[]).length)+" tabs",focused:!!w.focused,state:w.state||"normal",type:w.type||"normal",bounds:{left:Number.isFinite(w.left)?w.left:null,top:Number.isFinite(w.top)?w.top:null,width:Number.isFinite(w.width)?w.width:null,height:Number.isFinite(w.height)?w.height:null}};
 }
 function tabRecord(t){
   const p=registry.tabs[String(t.id)]?.persistentId||"";
