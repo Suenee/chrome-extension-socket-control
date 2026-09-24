@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.17 - 24.09.2026
+
+- Added editable CName and Name comboboxes with live suggestions derived from tabs in each browser window.
+- CName may now begin with a digit while retaining lowercase snake_case validation and uniqueness.
+- Replaced the combined Bounds column with X1, Y1, X2 and Y2 corner coordinates and widened the options page.
+- Added the derived tab `focused` state: true only when the tab is active and its containing browser window is focused.
+- Added the complete 16, 32, 48 and 128 px Client Socket Control icon set for toolbar and extension-management UI.
+- SUM manifest version is now 1.02 for the extended published tab state.
+
+
 ## 0.16 - 24.09.2026
 
 - Replaced the toolbar popup workflow with a full Client Socket Control options page.
