@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15 - 24.09.2026
+
+- Added Chromium-reported window bounds (`left`, `top`, `width`, `height`) to every browser window state record.
+- Window movement and resize events now trigger authoritative state publication.
+- Suppress duplicate browser-state events when the normalized state did not actually change; reconnect and newly available peers still receive a forced full snapshot.
+- CSC intentionally reports desktop coordinates only and does not infer monitor numbers or Windows virtual desktops.
+
+
 ## Manifest 1.01 - 24.09.2026
 
 - Added the native `browserState` array to the `browserStateChanged` event contract so strict SUM event validation matches the payload emitted by Client Socket Control.
