@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Client Socket Control</title><link rel="stylesheet" href="options.css"></head>
+<body><main>
+<header><div><h1>Client Socket Control <span>v0.16</span></h1><p>Browser control through Socket Universe.</p></div></header>
+<nav><button class="tab active" data-tab="windows">Windows</button><button class="tab" data-tab="configuration">Configuration</button></nav>
+<section id="windows" class="panel active">
+  <div class="panel-head"><div><h2>Windows</h2><p>Live browser windows. CName and Name must be unique.</p></div><button id="refreshWindows">Refresh</button></div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>CName</th><th>Name</th><th>Bounds</th></tr></thead><tbody id="windowRows"></tbody></table></div>
+  <p id="windowError" class="error"></p>
+</section>
+<section id="configuration" class="panel">
+  <h2>Configuration</h2>
+  <div class="form">
+    <label>Server<input id="host" placeholder="127.0.0.1"></label>
+    <label>Port<input id="port" type="number" min="1" max="65535" placeholder="8170"></label>
+    <label>Socket Box<input id="socketBox" placeholder="chrome"></label>
+    <label>API key<input id="apiKey" type="text" autocomplete="off"></label>
+    <label class="check"><input id="autoConnect" type="checkbox"> Connect automatically when browser starts</label>
+  </div>
+  <div class="status"><i id="light"></i><div><strong id="state">Loading…</strong><div id="detail"></div></div></div>
+  <p id="configError" class="error"></p>
+</section>
+<footer><button id="reset">Reset</button><span class="spacer"></span><button id="save" class="primary">Save</button><button id="close">Close</button></footer>
+</main><script type="module" src="options.js"></script></body></html>
