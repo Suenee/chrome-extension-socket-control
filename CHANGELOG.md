@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.18 - 25.09.2026
+
+- Treat an unavailable SUB endpoint as an expected reconnect state instead of an application-level failure.
+- Added exponential reconnect backoff: 3, 6, 12, 24, 48, then 60 seconds maximum.
+- Reset reconnect backoff immediately after a successful WebSocket connection or manual disconnect.
+- Connection status now reports that SUB is unavailable and shows the next retry delay.
+- Note: Chromium itself emits `ERR_CONNECTION_REFUSED` for a failed WebSocket handshake before extension code receives the asynchronous error event; the WebSocket API does not provide a way for CSC to suppress that browser-generated diagnostic.
+
+
 ## 0.17 - 24.09.2026
 
 - Added editable CName and Name comboboxes with live suggestions derived from tabs in each browser window.
