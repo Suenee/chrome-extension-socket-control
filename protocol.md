@@ -1,6 +1,6 @@
 # Client Socket Control VPP contract
 
-Application version: **0.17**  
+Application version: **0.18**  
 VPP version: **1**  
 SUM manifest version: **1.02**
 
