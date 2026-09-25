@@ -3,7 +3,7 @@ import { getBrowserState, getWindowConfiguration, saveWindowConfiguration } from
 import { envelope, dispatch } from "./vpp.js";
 
 const DEFAULTS={host:"127.0.0.1",port:8170,socketBox:"chrome",apiKey:"",autoConnect:true,configured:false};
-let ws=null, settings={...DEFAULTS}, admitted=false, peerConnected=false, reconnectTimer=null, pingTimer=null, publishTimer=null;
+let ws=null, settings={...DEFAULTS}, admitted=false, peerConnected=false, reconnectTimer=null, pingTimer=null, publishTimer=null, reconnectAttempt=0;
 const pending=new Map();
 
 chrome.runtime.onInstalled.addListener(details=>initialize({openSetup:details.reason==="install"}));
@@ -33,6 +33,14 @@ async function restartFromSettings(){
   if(!validSettings(settings)){ await setState("not_configured","Not configured — connection is inactive"); return; }
   if(settings.autoConnect) connect(); else setState("disabled","Auto-connect disabled");
 }
+function scheduleReconnect(){
+  if(!validSettings(settings)||!settings.autoConnect)return;
+  clearTimeout(reconnectTimer);
+  reconnectAttempt++;
+  const delay=Math.min(60000,3000*Math.pow(2,Math.min(reconnectAttempt-1,5)));
+  setState("connecting","SUB unavailable — retry in "+Math.round(delay/1000)+" s");
+  reconnectTimer=setTimeout(connect,delay);
+}
 function connect(){
   if(!validSettings(settings)){ setState("not_configured","Not configured — connection is inactive"); return; }
   if(!settings.autoConnect || ws?.readyState===WebSocket.OPEN || ws?.readyState===WebSocket.CONNECTING) return;
@@ -40,17 +48,17 @@ function connect(){
   const key="?apiKey="+encodeURIComponent(settings.apiKey);
   const url="ws://"+settings.host+":"+settings.port+"/mailbox/"+encodeURIComponent(settings.socketBox)+key;
   try { ws=new WebSocket(url); } catch(e){ fail(e); return; }
-  ws.onopen=()=>{ log("INFO","SOCKET","WebSocket open"); register(); };
+  ws.onopen=()=>{ reconnectAttempt=0; log("INFO","SOCKET","WebSocket open"); register(); };
   ws.onmessage=e=>receive(e.data);
-  ws.onerror=()=>setState("error","SUB connection error");
+  ws.onerror=()=>{ setState("connecting","SUB unavailable — waiting to reconnect"); };
   ws.onclose=e=>{
     log("WARN","SOCKET","Closed",{code:e.code,reason:e.reason}); ws=null; admitted=false; peerConnected=false; stopPing();
-    if(validSettings(settings)&&settings.autoConnect){setState("connecting","Reconnecting to SUB"); reconnectTimer=setTimeout(connect,3000);}
+    if(validSettings(settings)&&settings.autoConnect){scheduleReconnect();}
     else setState(validSettings(settings)?"disabled":"not_configured",validSettings(settings)?"Disconnected":"Not configured — connection is inactive");
   };
 }
 function disconnect(manual=true){
-  clearTimeout(reconnectTimer); stopPing(); if(manual) settings.autoConnect=false;
+  clearTimeout(reconnectTimer); reconnectAttempt=0; stopPing(); if(manual) settings.autoConnect=false;
   if(ws) { try{ws.close(1000,"User disconnect");}catch{} } ws=null; admitted=false; peerConnected=false;
 }
 async function register(){
@@ -92,7 +100,7 @@ async function setState(state,detail){
   await chrome.storage.local.set({connectionStatus:{state,level,detail,configured:validSettings(settings),admitted,peerConnected,updatedAt:new Date().toISOString()}});
   try{await chrome.action.setBadgeText({text:level==="green"?"OK":level==="yellow"?"…":level==="red"?"!":""});}catch{}
 }
-function fail(e){ log("ERROR","SOCKET","Connect failed",String(e)); setState("error",e.message||String(e)); if(validSettings(settings)&&settings.autoConnect) reconnectTimer=setTimeout(connect,3000); }
+function fail(e){ log("ERROR","SOCKET","Connect failed",String(e)); setState("error",e.message||String(e)); if(validSettings(settings)&&settings.autoConnect) scheduleReconnect(); }
 async function handleUi(m){
   if(m?.type==="getOptionsData"){ const local=await chrome.storage.local.get("connectionStatus"); return {settings:{...settings},status:local.connectionStatus||null,windows:await getWindowConfiguration()}; }
   if(m?.type==="saveOptions"){ const next={...DEFAULTS,...m.settings,configured:true}; if(!validSettings(next)) return {ok:false,error:"Server, valid port, Socket Box and API key are required."}; try{await saveWindowConfiguration(m.windows||[]);}catch(e){return {ok:false,error:e.message||String(e)};} settings=next;await chrome.storage.sync.set(settings);schedulePublish();return {ok:true}; }
