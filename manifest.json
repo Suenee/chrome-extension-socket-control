@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Client Socket Control",
-  "version": "0.17",
+  "version": "0.18",
   "description": "VPP/SUB control of Chrome and Brave windows and tabs.",
   "permissions": [
     "tabs",
