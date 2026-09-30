@@ -1,15 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Client Socket Control",
-  "version": "0.18",
-  "description": "VPP/SUB control of Chrome and Brave windows and tabs.",
+  "version": "0.19",
+  "description": "VPP/SUB control of Chrome and Brave windows, tabs and page DOM.",
   "permissions": [
     "tabs",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "ws://*/*",
-    "wss://*/*"
+    "wss://*/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "src/background.js",
