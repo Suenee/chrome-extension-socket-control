@@ -1,5 +1,5 @@
 import * as browser from "./browser.js";
-export const APP="ChromeSocketControl", VERSION="0.18", VPP=1;
+export const APP="ChromeSocketControl", VERSION="0.19", VPP=1;
 export function id(){ return crypto.randomUUID(); }
 export function envelope(from,type,extra={}) { return {protocolVersion:VPP,id:id(),type,from,source:{app:APP,version:VERSION},timestamp:new Date().toISOString(),...extra}; }
 export async function dispatch(message) {
@@ -7,6 +7,7 @@ export async function dispatch(message) {
   const a=message.args && typeof message.args==="object" && !Array.isArray(message.args) ? message.args : {};
   const methods={
     getBrowserState:()=>browser.getBrowserState(), getTab:()=>browser.getTab(a.tabId), findTabs:()=>browser.findTabs(a.selector),
+    findDomElement:()=>browser.findDomElement(a),
     createTab:()=>browser.createTab(a), closeTab:()=>browser.closeTab(a), activateTab:()=>browser.activateTab(a), focusTab:()=>browser.focusTab(a), moveTab:()=>browser.moveTab(a),
     moveTabs:()=>browser.moveTabs(a), reorderTabs:()=>browser.reorderTabs(a), createWindow:()=>browser.createWindow(a), closeWindow:()=>browser.closeWindow(a),
     focusWindow:()=>browser.focusWindow(a), moveTabsToNewWindow:()=>browser.moveTabsToNewWindow(a)
