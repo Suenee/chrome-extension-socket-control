@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.19 - 30.09.2026
+
+- Added the first generic DOM inspection action: `DOM: Find Element`.
+- A Companion action can select a live tab and find an element by Attribute, ID, Class, Text or CSS selector.
+- Exact, Contains and Wildcard matching are supported, with First or Last occurrence selection.
+- The result returns match count plus diagnostic element metadata including tag, attributes, text, class, alt, resolved image source and bounded outer HTML.
+- Added Chrome/Brave scripting permission and HTTP/HTTPS host access required for remote DOM inspection.
+- DOM access rejects protected/non-web pages with a dedicated `PAGE_ACCESS_DENIED` error.
+- SUM manifest version is now 1.03.
+
 ## 0.18 - 25.09.2026
 
 - Treat an unavailable SUB endpoint as an expected reconnect state instead of an application-level failure.
@@ -7,7 +17,6 @@
 - Reset reconnect backoff immediately after a successful WebSocket connection or manual disconnect.
 - Connection status now reports that SUB is unavailable and shows the next retry delay.
 - Note: Chromium itself emits `ERR_CONNECTION_REFUSED` for a failed WebSocket handshake before extension code receives the asynchronous error event; the WebSocket API does not provide a way for CSC to suppress that browser-generated diagnostic.
-
 
 ## 0.17 - 24.09.2026
 
@@ -17,7 +26,6 @@
 - Added the derived tab `focused` state: true only when the tab is active and its containing browser window is focused.
 - Added the complete 16, 32, 48 and 128 px Client Socket Control icon set for toolbar and extension-management UI.
 - SUM manifest version is now 1.02 for the extended published tab state.
-
 
 ## 0.16 - 24.09.2026
 
@@ -29,14 +37,12 @@
 - Clicking the extension toolbar icon now opens the options page.
 - Prepared the extension manifest for dedicated CSC icon assets.
 
-
 ## 0.15 - 24.09.2026
 
 - Added Chromium-reported window bounds (`left`, `top`, `width`, `height`) to every browser window state record.
 - Window movement and resize events now trigger authoritative state publication.
 - Suppress duplicate browser-state events when the normalized state did not actually change; reconnect and newly available peers still receive a forced full snapshot.
 - CSC intentionally reports desktop coordinates only and does not infer monitor numbers or Windows virtual desktops.
-
 
 ## Manifest 1.01 - 24.09.2026
 
